@@ -8,7 +8,7 @@ def create_tables(conn):
     cur = conn.cursor()
     tquery = """
     CREATE TABLE transactions
-    (date TEXT, amount REAL, category TEXT)
+    (date TEXT, description TEXT, amount REAL, category TEXT)
     """
     bquery = """
     CREATE TABLE budgets

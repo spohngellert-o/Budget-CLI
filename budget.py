@@ -4,7 +4,7 @@ import sqlite3
 from sqlite3 import Error
 import queries
 import constants
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class Main():
@@ -43,7 +43,12 @@ class Main():
         while not self.exit:
             act = input(constants.MAIN_TEXT)
             self.MAIN_OPTIONS.get(
-                act.lower(), lambda: print("Input command is not listed, try again."))()
+                act.lower(), lambda: print(constants.INPUT_ERROR))()
+
+    def create_tables(self):
+        """ Creates the SQL tables to be used in future activity.
+        """
+        queries.create_tables(self.conn)
 
     def update_transactions(self):
         """ Takes input on how to update transactions. Lists options for adding
@@ -90,6 +95,19 @@ class Main():
         """ Gives the user a view of recent transactions. Gives options for by
         week or month 
         """
+        exit = False
+        while not exit:
+            period = input(constants.VIEW_TXN_PERIOD)
+            if period == 'q':
+                exit = True
+            elif period == 'a':
+                self.print_transactions(self, weekly=True)
+                exit = True
+            elif period == 'b':
+                self.print_transactions(self, weekly=False)
+                exit = True
+            else:
+                print(constants.INPUT_ERROR)
 
     def view_budgets(self):
         """ Displays all budgets
@@ -99,18 +117,11 @@ class Main():
         for cat, amt in budgets:
             print(f"{cat}: ${amt:.2f}")
 
-
-
     def generate_report(self):
         """ Takes input on how to generate a report. Asks for month to report
         on, and generates a report for the given month based on the config.
         """
         pass
-
-    def create_tables(self):
-        """ Creates the SQL tables to be used in future activity.
-        """
-        queries.create_tables(self.conn)
 
     def update_budgets_cl(self):
         """ Command line interface for updating budgets
@@ -126,7 +137,7 @@ class Main():
                 vi = False
 
         queries.update_budget(self.conn, cat, amt)
-        return self.determine_exit('budgets')
+        return self.input_bool(constants.DO_ANOTHER.format('budgets'))
 
     def update_transactions_cl(self):
         """ Command line interface for updating transactions
@@ -148,21 +159,44 @@ class Main():
                 vi = False
 
         queries.update_transaction(self.conn, dt, cat, amt)
-        return self.determine_exit('transactions')
+        return self.input_bool(constants.DO_ANOTHER.format('transactions'))
 
-    def determine_exit(self, tbl):
+    def print_transactions(self, weekly: bool):
+        """ Prints transactions on either weekly or monthly basis
+        Parameters:
+            weekly - whether to print transactions weekly or monthly.
+        """
+        time_s = "week" if weekly else "month"
+        use_cur = self.input_bool(constants.USE_CUR_FOR_TXN_PRINT)
+        cur_d = datetime.today()
+        if not use_cur:
+            if weekly:
+                cur_d = cur_d - timedelta(days=(cur_d.weekday() + 2) % 7)
+            else:
+                cur_d.month = cur_d.month - 1
+        exit = False
+        while not exit:
+            txns = queries.get_week_transactions(
+                cur_d) if weekly else queries.get_month_transactions(cur_d)
+            for d, desc, cat, amt in txns:
+                print(f"{d.strftime('%Y-%m-%d')}: {desc} - ${amt:.2f} ({cat})")
+            exit = input_bool(constants.SEE_MORE_TXNS)
+
+    def input_bool(self, s: str):
         ''' Determines whether another action should be taken.
+        Parameter:
+            s - The string to print to ask for boolean input
         '''
 
         exit = False
         while not exit:
-            cont = input(constants.DO_ANOTHER.format(tbl))
+            cont = input(s)
             if cont.lower() == 'y' or cont == '':
                 return False
             elif cont.lower() == 'n':
                 return True
             else:
-                print("Sorry, that input was not recognized.")
+                print(constants.INPUT_ERROR)
 
     def read_date(self, d):
         """ Takes in the given date and returns a standard datetime string,
@@ -188,7 +222,6 @@ class Main():
             except:
                 pass
         raise ValueError("Given date string could not be read.")
-
 
     def quit(self):
         self.conn.close()

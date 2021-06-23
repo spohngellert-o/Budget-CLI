@@ -30,9 +30,28 @@ CL_TXN_INPUT = format_input("""
 Ok, Type the transaction in the following format: 'DATE CATEGORY AMOUNT'
 """)
 
-DO_ANOTHER = "Would you like to update more {}? (Y/n): "
+DO_ANOTHER = format_input("""
+Would you like to update more {}? (Y/n)
+""")
 
 FORMATS = [("%Y-%m-%d", True),
            ("%Y/%m/%d", True),
            ("%d/%m/%Y", True),
            ("%d/%m", False)]
+
+VIEW_TXN_PERIOD = """
+Ok, over what period would you like to view transactions?
+[a] Weekly
+[b] Monthly
+[q] Back
+"""
+
+INPUT_ERROR = "Input command is not listed, try again."
+
+USE_CUR_FOR_TXN_PRINT = format_input(f"""
+Would you like to show transactions from the current {time_s}? (Y/n)
+""")
+
+SEE_MORE_TXNS = format_input(f"""
+Would you like to see another {time_s} of transactions? (Y/n)
+""")
