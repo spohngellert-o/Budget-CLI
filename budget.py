@@ -5,6 +5,7 @@ from sqlite3 import Error
 import queries
 import constants
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 
 
 class Main():
@@ -95,19 +96,15 @@ class Main():
         """ Gives the user a view of recent transactions. Gives options for by
         week or month 
         """
-        exit = False
-        while not exit:
-            period = input(constants.VIEW_TXN_PERIOD)
-            if period == 'q':
-                exit = True
-            elif period == 'a':
-                self.print_transactions(self, weekly=True)
-                exit = True
-            elif period == 'b':
-                self.print_transactions(self, weekly=False)
-                exit = True
-            else:
+        period = ""
+        while period not in ['a', 'b', 'q']:
+            period = input(constants.VIEW_TXN_PERIOD).lower()
+            if period not in ['a', 'b', 'q']:
                 print(constants.INPUT_ERROR)
+        if period == 'a':
+            self.view_transactions_period(weekly=True)
+        elif period == 'b':
+            self.view_transactions_period(weekly=False)
 
     def view_budgets(self):
         """ Displays all budgets
@@ -128,7 +125,7 @@ class Main():
         """
         vi = False
         while not vi:
-            cat, amt = input(constants.CL_BUDGET_INPUT).strip().split(" ")
+            cat, amt = input(constants.CL_BUDGET_INPUT).strip().split(",")
             vi = True
             try:
                 amt = round(float(amt), 2)
@@ -136,15 +133,16 @@ class Main():
                 print('Given amount is invalid.')
                 vi = False
 
-        queries.update_budget(self.conn, cat, amt)
-        return self.input_bool(constants.DO_ANOTHER.format('budgets'))
+        queries.update_budget(self.conn, cat.strip(), amt)
+        return not self.input_bool(constants.DO_ANOTHER.format('budgets'))
 
     def update_transactions_cl(self):
         """ Command line interface for updating transactions
         """
         vi = False
         while not vi:
-            dt, cat, amt = input(constants.CL_TXN_INPUT).strip().split(" ")
+            dt, desc, cat, amt = input(
+                constants.CL_TXN_INPUT).strip().split(",")
             vi = True
             try:
                 dt = self.read_date(dt)
@@ -158,29 +156,30 @@ class Main():
                 print('Given amount is invalid.')
                 vi = False
 
-        queries.update_transaction(self.conn, dt, cat, amt)
-        return self.input_bool(constants.DO_ANOTHER.format('transactions'))
+        queries.update_transaction(
+            self.conn, dt, desc.strip(), cat.strip(), amt)
+        return not self.input_bool(constants.DO_ANOTHER.format('transactions'))
 
-    def print_transactions(self, weekly: bool):
+    def view_transactions_period(self, weekly: bool):
         """ Prints transactions on either weekly or monthly basis
         Parameters:
             weekly - whether to print transactions weekly or monthly.
         """
         time_s = "week" if weekly else "month"
-        use_cur = self.input_bool(constants.USE_CUR_FOR_TXN_PRINT)
+        use_cur = self.input_bool(
+            constants.USE_CUR_FOR_TXN_PRINT.format(time_s))
         cur_d = datetime.today()
         if not use_cur:
-            if weekly:
-                cur_d = cur_d - timedelta(days=(cur_d.weekday() + 2) % 7)
-            else:
-                cur_d.month = cur_d.month - 1
+            cur_d -= timedelta(days=(cur_d.weekday() + 2) %
+                               7) if weekly else relativedelta(months=1)
         exit = False
         while not exit:
             txns = queries.get_week_transactions(
-                cur_d) if weekly else queries.get_month_transactions(cur_d)
+                self.conn, cur_d) if weekly else queries.get_month_transactions(self.conn, cur_d)
             for d, desc, cat, amt in txns:
-                print(f"{d.strftime('%Y-%m-%d')}: {desc} - ${amt:.2f} ({cat})")
-            exit = input_bool(constants.SEE_MORE_TXNS)
+                print(f"{d}: {desc} - ${amt:.2f} ({cat})")
+            exit = not self.input_bool(constants.SEE_MORE_TXNS.format(time_s))
+            cur_d -= timedelta(days=7) if weekly else relativedelta(months=1)
 
     def input_bool(self, s: str):
         ''' Determines whether another action should be taken.
@@ -192,9 +191,9 @@ class Main():
         while not exit:
             cont = input(s)
             if cont.lower() == 'y' or cont == '':
-                return False
-            elif cont.lower() == 'n':
                 return True
+            elif cont.lower() == 'n':
+                return False
             else:
                 print(constants.INPUT_ERROR)
 

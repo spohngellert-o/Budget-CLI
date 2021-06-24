@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 
 def create_tables(conn):
     """ Creates the transactions, budgets, and income tables
@@ -34,12 +35,12 @@ def update_budget(conn, cat: str, amt: float):
 	cur.execute(query)
 	conn.commit()
 
-def update_transaction(conn, date: str, cat: str, amt: float):
+def update_transaction(conn, date: str, desc:str, cat: str, amt: float):
 	cur = conn.cursor()
 	query = f"""
 	INSERT
-	INTO transactions (date, category, amount) 
-	VALUES('{date}', '{cat}', {amt})
+	INTO transactions (date, description, category, amount) 
+	VALUES('{date}', '{desc}', '{cat}', {amt})
 	"""
 	cur.execute(query)
 	conn.commit()
@@ -48,3 +49,24 @@ def get_budgets(conn):
 	cur = conn.cursor()
 	budgets = cur.execute('SELECT category, amount FROM budgets')
 	return budgets
+
+def get_week_transactions(conn, d):
+	cur = conn.cursor()
+	query = f"""
+	SELECT date, description, category, amount
+	FROM transactions
+	WHERE DATE(date) <= '{d.strftime("%Y-%m-%d")}'
+	AND DATE(date) > '{(d - timedelta(days=7)).strftime("%Y-%m-%d")}'
+	"""
+	return cur.execute(query)
+
+def get_month_transactions(conn, d):
+	cur = conn.cursor()
+	query = f"""
+	SELECT date, description, category, amount
+	FROM transactions
+	WHERE STRFTIME('%m', date) = '{str(d.month).zfill(2)}'
+	AND STRFTIME('%Y', date) = '{d.year}'
+	"""
+	return cur.execute(query)
+

@@ -23,11 +23,11 @@ How would you like to create/update a {}?
 """)
 
 CL_BUDGET_INPUT = format_input("""
-Ok, Type the budget in the following format: 'CATEGORY AMOUNT'
+Ok, Type the budget in the following format: 'CATEGORY, AMOUNT'
 """)
 
 CL_TXN_INPUT = format_input("""
-Ok, Type the transaction in the following format: 'DATE CATEGORY AMOUNT'
+Ok, Type the transaction in the following format: 'DATE, DESCRIPTION, CATEGORY, AMOUNT'
 """)
 
 DO_ANOTHER = format_input("""
@@ -39,19 +39,19 @@ FORMATS = [("%Y-%m-%d", True),
            ("%d/%m/%Y", True),
            ("%d/%m", False)]
 
-VIEW_TXN_PERIOD = """
+VIEW_TXN_PERIOD = format_input("""
 Ok, over what period would you like to view transactions?
 [a] Weekly
 [b] Monthly
 [q] Back
-"""
+""")
 
 INPUT_ERROR = "Input command is not listed, try again."
 
-USE_CUR_FOR_TXN_PRINT = format_input(f"""
-Would you like to show transactions from the current {time_s}? (Y/n)
+USE_CUR_FOR_TXN_PRINT = format_input("""
+Would you like to show transactions from the current {}? (Y/n)
 """)
 
-SEE_MORE_TXNS = format_input(f"""
-Would you like to see another {time_s} of transactions? (Y/n)
+SEE_MORE_TXNS = format_input("""
+Would you like to see another {} of transactions? (Y/n)
 """)
