@@ -18,7 +18,7 @@ def create_tables(conn):
 
     iquery = """
     CREATE TABLE income
-    (date TEXT, amount REAL, category TEXT)
+    (date TEXT, category TEXT, amount REAL)
     """
     cur.execute(tquery)
     cur.execute(bquery)
@@ -31,6 +31,16 @@ def update_budget(conn, cat: str, amt: float):
 	INSERT or REPLACE 
 	INTO budgets (category, amount) 
 	VALUES('{cat}', {amt})
+	"""
+	cur.execute(query)
+	conn.commit()
+
+def update_income(conn, dt: str, cat: str, amt: float):
+	cur = conn.cursor()
+	query = f"""
+	INSERT or REPLACE 
+	INTO income (date, category, amount) 
+	VALUES('{dt}', '{cat}', {amt})
 	"""
 	cur.execute(query)
 	conn.commit()

@@ -90,7 +90,24 @@ class Main():
         one at a time, adding income in bulk, and removing income. Appropriately
         updates the income table.
         """
-        pass
+        valid = False
+        while not valid:
+            dt, cat, amt = input(constants.CL_INCOME_INPUT).strip().split(",")
+            valid = True
+            try:
+                amt = round(float(amt), 2)
+            except:
+                print('Given amount is invalid.')
+                valid = False
+            try:
+                dt = self.read_date(dt)
+            except:
+                print('Given date is invalid, format options are: {}'.format(
+                    ', '.join(fmt for fmt, _ in constants.FORMATS)))
+                vi = False
+
+        queries.update_income(self.conn, dt, cat.strip(), amt)
+        return not self.input_bool(constants.DO_ANOTHER.format('income'))
 
     def view_transcations(self):
         """ Gives the user a view of recent transactions. Gives options for by

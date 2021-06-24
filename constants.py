@@ -26,6 +26,11 @@ CL_BUDGET_INPUT = format_input("""
 Ok, Type the budget in the following format: 'CATEGORY, AMOUNT'
 """)
 
+
+CL_INCOME_INPUT = format_input("""
+Ok, Type the income in the following format: 'DATE, CATEGORY, AMOUNT'
+""")
+
 CL_TXN_INPUT = format_input("""
 Ok, Type the transaction in the following format: 'DATE, DESCRIPTION, CATEGORY, AMOUNT'
 """)
