@@ -35,6 +35,11 @@ CL_TXN_INPUT = format_input("""
 Ok, Type the transaction in the following format: 'DATE, DESCRIPTION, CATEGORY, AMOUNT'
 """)
 
+CSV_TXN_INPUT = format_input("""
+Ok, Type the path to the csv file containing the transactions
+""")
+
+
 DO_ANOTHER = format_input("""
 Would you like to update more {}? (Y/n)
 """)
@@ -60,3 +65,5 @@ Would you like to show transactions from the current {}? (Y/n)
 SEE_MORE_TXNS = format_input("""
 Would you like to see another {} of transactions? (Y/n)
 """)
+
+TRANSACTION_CSV_COLS = ['amount', 'category', 'date', 'description']

@@ -6,6 +6,8 @@ import queries
 import constants
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+import pandas as pd
+import numpy as np
 
 
 class Main():
@@ -64,7 +66,7 @@ class Main():
             if how == 'a':
                 exit = self.update_transactions_cl()
             elif how == 'b':
-                continue
+                exit = self.update_transactions_csv()
             else:
                 exit = True
 
@@ -152,6 +154,32 @@ class Main():
 
         queries.update_budget(self.conn, cat.strip(), amt)
         return not self.input_bool(constants.DO_ANOTHER.format('budgets'))
+
+    def update_transactions_csv(self):
+        """ Command line interface for updating transactions
+        """
+        vi = False
+        while not vi:
+            file_path = input(
+                constants.CSV_TXN_INPUT).strip()
+            vi = True
+            try:
+                data = pd.read_csv(file_path, parse_dates=[
+                                   'date'], dtype={'amount': np.float64})
+            except Exception as e:
+                print(f"Could not read file at path {file_path}, got error: {repr(e)}.")
+                vi = False
+                continue
+            if sorted(data.columns) != constants.TRANSACTION_CSV_COLS:
+                print(f"Given csv had columns {sorted(data.columns)}, expected f{constants.TRANSACTION_CSV_COLS}")
+                vi = False
+                continue
+            data['amount'] = data['amount'].apply(
+                lambda amt: round(amt, 2))
+            data['date'] = data['date'].dt.strftime("%Y-%m-%d")
+
+        queries.update_transactions(self.conn, data)
+        return not self.input_bool(constants.DO_ANOTHER.format('transactions'))
 
     def update_transactions_cl(self):
         """ Command line interface for updating transactions
