@@ -226,18 +226,23 @@ class Main():
             exit = not self.input_bool(constants.SEE_MORE_TXNS.format(time_s))
             cur_d -= timedelta(days=7) if weekly else relativedelta(months=1)
 
-    def input_bool(self, s: str):
+    def input_bool(self, s: str, default=True) -> bool:
         ''' Determines whether another action should be taken.
         Parameter:
             s - The string to print to ask for boolean input
+            default - The default return value (if no input is given)
+        Returns:
+            A boolean representing the input of the user.
         '''
 
         exit = False
         while not exit:
-            cont = input(s)
-            if cont.lower() == 'y' or cont == '':
+            cont = input(s).strip().lower()
+            if cont == 'y':
                 return True
-            elif cont.lower() == 'n':
+            elif cont == '':
+                return default
+            elif cont == 'n':
                 return False
             else:
                 print(constants.INPUT_ERROR)
