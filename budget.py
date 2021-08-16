@@ -130,8 +130,11 @@ class Main():
         """
         budgets = queries.get_budgets(self.conn)
         print("\n---All Budgets---")
+        tot = 0
         for cat, amt in budgets:
             print(f"{cat}: ${amt:.2f}")
+            tot += amt
+        print(f"\nTotal: {round(tot, 2)}")
 
     def generate_report(self):
         """ Takes input on how to generate a report. Asks for month to report
@@ -221,8 +224,11 @@ class Main():
         while not exit:
             txns = queries.get_week_transactions(
                 self.conn, cur_d) if weekly else queries.get_month_transactions(self.conn, cur_d)
+            tot = 0
             for d, desc, cat, amt in txns:
                 print(f"{d}: {desc} - ${amt:.2f} ({cat})")
+                tot += amt
+            print(f"\nTotal: ${round(tot, 2)}")
             exit = not self.input_bool(constants.SEE_MORE_TXNS.format(time_s))
             cur_d -= timedelta(days=7) if weekly else relativedelta(months=1)
 
