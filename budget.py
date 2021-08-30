@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import pandas as pd
 import numpy as np
+import altair as alt
 
 
 class Main():
@@ -140,7 +141,16 @@ class Main():
         """ Takes input on how to generate a report. Asks for month to report
         on, and generates a report for the given month based on the config.
         """
-        pass
+        cur_d = datetime.today()
+        txns = queries.get_month_transactions(self.conn, cur_d)
+        data = pd.DataFrame(
+            txns, columns=["date", "description", "category", "amount"])
+        chart_data = data[['amount', 'category']].groupby(
+            "category").sum().reset_index()
+        alt.Chart(chart_data).mark_bar().encode(
+            x='category',
+            y='amount'
+        ).save('chart.html')
 
     def update_budgets_cl(self):
         """ Command line interface for updating budgets
