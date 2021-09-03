@@ -150,27 +150,22 @@ class Main():
         totals_data = totals_data.groupby(pd.Grouper(
             key='date', freq='1M')).sum().reset_index()
         print(totals_data)
+        totals_data['type'] = 'Spending'
+        totals_data['opa'] = 1
 
         budgets = dict(queries.get_budgets(self.conn))
         tot_budgets = sum(budgets.values())
+        tot_budget_df = pd.DataFrame({'date': totals_data['date'],
+                                      'amount': [tot_budgets for i in range(len(totals_data))]})
+        tot_budget_df['type'] = 'Budget'
+        tot_budget_df['opa'] = 0.5
+        comb_df = pd.concat((totals_data, tot_budget_df))
 
-        base1 = alt.Chart(totals_data)
-        base2 = alt.Chart(pd.DataFrame({'date': totals_data['date'],
-                                        'total': [tot_budgets for i in range(len(totals_data))]}))
-        alt.layer(base1.mark_line(point=True).encode(
+        alt.Chart(comb_df).mark_line(point=True).encode(
             x='yearmonth(date)',
             y='amount',
-            color='red'
-        ).configure_mark(
-            color='red'
-        ),
-            base2.mark_line(point=True).encode(
-                x='yearmonth(date)',
-                y='total'
-        ).configure_mark(
-                color='blue',
-                opacity=0.5)
-        ).save('chart.html')
+            color='type',
+            opacity=alt.Opacity('opa', legend=None)).save('chart.html')
 
     def update_budgets_cl(self):
         """ Command line interface for updating budgets
