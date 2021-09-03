@@ -141,15 +141,35 @@ class Main():
         """ Takes input on how to generate a report. Asks for month to report
         on, and generates a report for the given month based on the config.
         """
-        cur_d = datetime.today()
-        txns = queries.get_month_transactions(self.conn, cur_d)
+        txns = queries.get_last_six_months_txns(self.conn)
         data = pd.DataFrame(
             txns, columns=["date", "description", "category", "amount"])
-        chart_data = data[['amount', 'category']].groupby(
-            "category").sum().reset_index()
-        alt.Chart(chart_data).mark_bar().encode(
-            x='category',
-            y='amount'
+        totals_data = data.loc[:, ['amount', 'date']]
+        totals_data['date'] = totals_data['date'].astype(
+            {'date': 'datetime64[ns]'})
+        totals_data = totals_data.groupby(pd.Grouper(
+            key='date', freq='1M')).sum().reset_index()
+        print(totals_data)
+
+        budgets = dict(queries.get_budgets(self.conn))
+        tot_budgets = sum(budgets.values())
+
+        base1 = alt.Chart(totals_data)
+        base2 = alt.Chart(pd.DataFrame({'date': totals_data['date'],
+                                        'total': [tot_budgets for i in range(len(totals_data))]}))
+        alt.layer(base1.mark_line(point=True).encode(
+            x='yearmonth(date)',
+            y='amount',
+            color='red'
+        ).configure_mark(
+            color='red'
+        ),
+            base2.mark_line(point=True).encode(
+                x='yearmonth(date)',
+                y='total'
+        ).configure_mark(
+                color='blue',
+                opacity=0.5)
         ).save('chart.html')
 
     def update_budgets_cl(self):

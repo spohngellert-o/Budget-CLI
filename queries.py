@@ -101,3 +101,14 @@ def get_month_transactions(conn, d):
 	AND STRFTIME('%Y', date) = '{d.year}'
 	"""
     return cur.execute(query)
+
+def get_last_six_months_txns(conn):
+    cur = conn.cursor()
+    query = f"""
+    SELECT date, description, category, amount
+    FROM transactions
+    WHERE date < DATE('now')
+    AND date > DATE('now', '-6 months')
+    ORDER BY date
+    """
+    return cur.execute(query)
