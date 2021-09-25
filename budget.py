@@ -137,11 +137,8 @@ class Main():
             tot += amt
         print(f"\nTotal: {round(tot, 2)}")
 
-    def generate_report(self):
-        """ Takes input on how to generate a report. Asks for month to report
-        on, and generates a report for the given month based on the config.
-        """
-        txns = queries.get_last_six_months_txns(self.conn)
+    def get_category_data(self, category=None):
+        txns = queries.get_last_six_months_txns(self.conn, category)
         data = pd.DataFrame(
             txns, columns=["date", "description", "category", "amount"])
         totals_data = data.loc[:, ['amount', 'date']]
@@ -149,23 +146,54 @@ class Main():
             {'date': 'datetime64[ns]'})
         totals_data = totals_data.groupby(pd.Grouper(
             key='date', freq='1M')).sum().reset_index()
-        print(totals_data)
         totals_data['type'] = 'Spending'
         totals_data['opa'] = 1
 
         budgets = dict(queries.get_budgets(self.conn))
-        tot_budgets = sum(budgets.values())
+        if category is None:
+            budget_sum = sum(budgets.values())
+        else:
+            budget_sum = budgets.get(category, 0)
         tot_budget_df = pd.DataFrame({'date': totals_data['date'],
-                                      'amount': [tot_budgets for i in range(len(totals_data))]})
+                                      'amount': [budget_sum for i in range(len(totals_data))]})
         tot_budget_df['type'] = 'Budget'
         tot_budget_df['opa'] = 0.5
         comb_df = pd.concat((totals_data, tot_budget_df))
+        comb_df['cat_name'] = category if category else "All"
+        return comb_df
 
+    def generate_report(self):
+        """ Takes input on how to generate a report. Asks for month to report
+        on, and generates a report for the given month based on the config.
+        """
+        dfs = []
+        categories = [v[0] for v in queries.get_budgets(self.conn)]
+        dfs.append(self.get_category_data(None))
+        for category in categories:
+
+            dfs.append(self.get_category_data(category))
+
+        categories = ["All"] + categories
+        comb_df = pd.concat(dfs)
+        input_dropdown = alt.binding_select(options=categories)
+        selection = alt.selection_single(
+            fields=['cat_name'], bind=input_dropdown, name='Spending Category', init={'cat_name': 'All'})
+        shape = alt.condition(selection,
+                              alt.Shape('cat_name:O', legend=None),
+                              alt.value('o'))
         alt.Chart(comb_df).mark_line(point=True).encode(
             x='yearmonth(date)',
             y='amount',
             color='type',
-            opacity=alt.Opacity('opa', legend=None)).save('chart.html')
+            shape=alt.Shape('cat_name', legend=None),
+            opacity=alt.Opacity('opa', legend=None)
+        ).add_selection(
+            selection
+        ).transform_filter(
+            selection
+        ).save(
+            'chart.html'
+        )
 
     def update_budgets_cl(self):
         """ Command line interface for updating budgets

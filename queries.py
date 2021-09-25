@@ -102,13 +102,23 @@ def get_month_transactions(conn, d):
 	"""
     return cur.execute(query)
 
-def get_last_six_months_txns(conn):
+def get_last_six_months_txns(conn, category=None):
     cur = conn.cursor()
-    query = f"""
-    SELECT date, description, category, amount
-    FROM transactions
-    WHERE date < DATE('now')
-    AND date > DATE('now', '-6 months')
-    ORDER BY date
-    """
+    if category is not None:
+        query = f"""
+        SELECT date, description, category, amount
+        FROM transactions
+        WHERE date < DATE('now')
+        AND date > DATE('now', '-6 months')
+        AND category='{category}'
+        ORDER BY date
+        """
+    else:
+        query = f"""
+        SELECT date, description, category, amount
+        FROM transactions
+        WHERE date < DATE('now')
+        AND date > DATE('now', '-6 months')
+        ORDER BY date
+        """
     return cur.execute(query)
